@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[1/4] Creating virtual environment (.venv)"
+python3 -m venv .venv
+
+echo "[2/4] Upgrading pip"
+.venv/bin/python -m pip install -U pip
+
+echo "[3/4] Installing dependencies"
+.venv/bin/python -m pip install -U -r requirements.txt
+
+if [[ ! -f .env ]]; then
+  echo "[4/4] Creating .env from template"
+  cp .env.example .env
+else
+  echo "[4/4] .env already exists; leaving it unchanged"
+fi
+
+echo ""
+echo "Setup complete."
+echo "Next:"
+echo "  source .venv/bin/activate"
+echo "  python lab2_task1.py"
+echo "  python lab2_task2.py --mode both"
