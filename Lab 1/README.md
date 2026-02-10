@@ -12,7 +12,6 @@ This folder is organized for students to run two files only.
 ## Setup
 
 ```bash
-cd /mnt/AI_Agent_Lab
 bash setup.sh
 source .venv/bin/activate
 ```

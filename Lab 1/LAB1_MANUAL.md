@@ -44,7 +44,6 @@ pip install -q -U google-genai python-dotenv
 Recommended for this project:
 
 ```bash
-cd /mnt/AI_Agent_Lab
 bash setup.sh
 source .venv/bin/activate
 ```

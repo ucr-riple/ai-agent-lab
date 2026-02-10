@@ -9,7 +9,6 @@ Primary student files:
 ## Quick start
 
 ```bash
-cd /mnt/AI_Agent_Lab2
 bash setup.sh
 source .venv/bin/activate
 ```
