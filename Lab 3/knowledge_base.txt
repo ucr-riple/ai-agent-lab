@@ -1,0 +1,10 @@
+# Lab 3 Knowledge Base (Local Document)
+
+Event: UCR 2026 Space-Pizza Gala
+Date: March 14, 2026
+Dress code: Astronaut Casual
+Location: UCR Student Success Center Ballroom
+
+Notes:
+- This event is fictional and used only for the RAG exercise.
+- Students should verify that answers come from this file context.

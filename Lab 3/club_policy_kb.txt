@@ -1,0 +1,8 @@
+# Club Policy Knowledge Base
+
+Policy: The Advanced Coding Club is open to CS majors.
+Policy: Students with an account hold cannot participate in club activities until cleared.
+
+Notes:
+- This file simulates an external policy document for RAG.
+- Edit this file to test whether assistant decisions change with policy updates.
