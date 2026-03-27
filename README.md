@@ -16,7 +16,7 @@ We will build a modular, AI-powered system using **Agentic Design Patterns** and
 
 *Focus on manual implementation and understanding the AI mechanics.*
 
-- **Week 1:** API & Environment Setup.
+- **Week 1:** Warmup: No Lab.
 - **Week 2:** API & Environment Setup.
 - **Week 3:** Structured Data Extraction & Reasoning Logic.
 - **Week 4:** RAG & Tool Calling.
