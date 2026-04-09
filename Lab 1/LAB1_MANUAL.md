@@ -80,7 +80,6 @@ Minimum requirements:
 Submission evidence:
 
 - 1 screenshot of a successful run.
-- 2 test prompts you used.
 
 ### Task 2: Build a Terminal Chat Agent
 
@@ -111,10 +110,10 @@ Submission evidence:
 - 1 screenshot showing at least 3 turns.
 - 1 screenshot showing clean termination (`exit`/`quit`/`bye`).
 
-Worksheet:
+### Worksheet
 - `STUDENT_WORKSHEET.md`
 
-## 5. Additional Tasks
+## 5. Additional, Optional Tasks
 
 ### Task A: Setting a System Persona
 

@@ -6,8 +6,8 @@ This folder is organized for students to run two files only.
 
 - `student_single_turn_template.py`: Task 1 (single-turn generation)
 - `student_chat_template.py`: Task 2 (multi-turn chat with exit/quit/bye)
-- `LAB1_MANUAL.md`: Full lab instructions
 - `STUDENT_WORKSHEET.md`: Submission checklist
+- `LAB1_MANUAL.md`: Full lab instructions
 
 ## Setup
 
