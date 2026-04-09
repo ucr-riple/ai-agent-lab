@@ -5,10 +5,10 @@ echo "[1/4] Creating virtual environment (.venv)"
 python3 -m venv .venv
 
 echo "[2/4] Upgrading pip"
-.venv/Scripts/python -m pip install -U pip
+.venv/Scripts/python.exe -m pip install -U pip
 
 echo "[3/4] Installing dependencies"
-.venv/Scripts/python -m pip install -U -r requirements.txt
+.venv/Scripts/python.exe -m pip install -U -r requirements.txt
 
 if [[ ! -f .env ]]; then
   echo "[4/4] Creating .env from template"
