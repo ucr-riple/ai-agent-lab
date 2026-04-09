@@ -43,17 +43,24 @@ pip install -q -U google-genai python-dotenv
 
 Recommended for this project:
 
+For Linux / macOS:
 ```bash
 bash setup.sh
 source .venv/bin/activate
 ```
 
+For Windows Git Bash:
+```bash
+bash setup_windows.sh
+source .venv/Scripts/activate
+```
+
 ### Step 3: Environment Variables
 
-Create a file named `.env` in the project root:
+Set up your API key as an environment variable:
 
-```text
-GOOGLE_API_KEY=YOUR_ACTUAL_API_KEY_HERE
+```bash
+export GOOGLE_API_KEY=<YOUR_ACTUAL_API_KEY_HERE>
 ```
 
 ## 4. Project Tasks

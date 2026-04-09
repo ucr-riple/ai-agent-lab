@@ -7,8 +7,8 @@ Use these template files:
 
 ## Before running
 
-1. `bash setup.sh`
-2. `source .venv/bin/activate`
+1. `bash setup.sh` (Linux / macOS) or `bash setup_windows.sh` (Windows Git Bash)
+2. `source .venv/bin/activate` (Linux / macOS) or `source .venv/Scripts/activate` (Windows Git Bash)
 3. Confirm `.env` has `GOOGLE_API_KEY=...`
 
 ## Task 1: Single-Turn Generation

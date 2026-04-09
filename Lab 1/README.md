@@ -11,15 +11,22 @@ This folder is organized for students to run two files only.
 
 ## Setup
 
+For Linux or macOS:
 ```bash
 bash setup.sh
 source .venv/bin/activate
 ```
 
-Set your key in `.env`:
+For Windows Git Bash:
+```bash
+bash setup_windows.sh
+source .venv/Scripts/activate
+```
 
-```text
-GOOGLE_API_KEY=YOUR_ACTUAL_API_KEY_HERE
+Set your key as an environment variable to avoid mistakenly submitting it:
+
+```bash
+export GOOGLE_API_KEY=<YOUR_ACTUAL_API_KEY_HERE>
 ```
 
 ## Run
