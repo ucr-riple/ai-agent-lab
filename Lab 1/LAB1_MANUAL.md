@@ -49,11 +49,7 @@ bash setup.sh
 source .venv/bin/activate
 ```
 
-For Windows Git Bash:
-```bash
-bash setup_windows.sh
-source .venv/Scripts/activate
-```
+If you are using Windows, follow [WINDOWS_SETUP.md](WINDOWS_SETUP.md).
 
 ### Step 3: Environment Variables
 
@@ -62,6 +58,8 @@ Set up your API key as an environment variable:
 ```bash
 export GOOGLE_API_KEY=<YOUR_ACTUAL_API_KEY_HERE>
 ```
+
+If you are using Windows, follow [WINDOWS_SETUP.md](WINDOWS_SETUP.md).
 
 ## 4. Project Tasks
 
