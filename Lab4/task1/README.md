@@ -38,4 +38,6 @@ Requirements:
 - Student can explain what each test verifies.
 
 ## Deliverable
-- Screenshot or terminal log showing passing tests.
+- The generated `bubble_sort.py`.
+- The generated `test_bubble_sort.py`.
+- Screenshot(s) showing passing tests.

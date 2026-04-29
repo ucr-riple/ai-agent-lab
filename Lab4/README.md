@@ -16,9 +16,9 @@ Practice modular system design by defining clear boundaries and contracts across
 3. Submit Task 2 using `task2/WORKSHEET.md`.
 
 ## Deliverables
-- [ ] Task 1 completed with passing Bubble Sort tests
+- [ ] Task 1 completed with passing Bubble Sort tests (i.e., the generated Python scripts and execution screenshots)
 - [ ] Task 2 worksheet completed (`task2/WORKSHEET.md`)
-- [ ] Student can explain module boundaries and why strict separation (`interface` vs `engine` vs `storage`) improves maintainability and testing
+- [ ] A text file to show that the student can explain why boundaries reduce coupling and improve maintainability
 
 ## Structure
 ```text

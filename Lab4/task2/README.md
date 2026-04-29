@@ -37,7 +37,7 @@ Quick check for TODO 2 quality:
 
 ## Deliverable Checklist
 - [ ] `task2/WORKSHEET.md` completed
-- [ ] Student can explain why boundaries reduce coupling and improve maintainability
+- [ ] A text file to show that the student can explain why boundaries reduce coupling and improve maintainability
 
 ## Notes
 - Keep this task design-focused with no implementation required.
