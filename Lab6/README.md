@@ -8,7 +8,7 @@
 
 ## 2. Prerequisites
 
-- Lab 6 complete: live Google Sheets connected, all storage tests green.
+- Steps in `google_sheet_setup.md` complete: live Google Sheets connected, all storage tests green.
 - `service_account.json` in project root and storage layer working.
 - `.env` with `GEMINI_API_KEY` set (from Lab 1 setup).
 
