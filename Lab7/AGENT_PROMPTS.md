@@ -1,61 +1,63 @@
 # Agent Prompt Pack (Lab 7)
 
-## Core Engine Implementation Prompt
+## Core Interface Implementation Prompt
 
 Use this after copying the starter file and confirming all five tests are in red state.
 
 ```text
-I am implementing the Engine layer for ucr-club-assistant.
-Context: Read CONTRACT.md, FUNCTIONALITY.md, src/storage/storage_handler.py,
-         src/storage/storage_handler_extended.py, and tests/engine/test_engine.py.
-Goal: Implement process_request(user_input: str) -> dict in src/engine/engine.py.
+I am implementing the Interface layer for ucr-club-assistant.
+Context: Read CONTRACT.md, FUNCTIONALITY.md, src/engine/engine.py, and tests/interface/test_interface.py.
+Goal: Implement format_response(result: dict) -> str and run_session(process_fn=None)
+      in src/interface/cli.py.
 Requirements:
-1. Step 1 — Tool Use: Initialize an AI model client using _API_KEY and _MODEL from
-   engine.py. Call the model with _EXTRACTION_PROMPT as the system instruction and
-   user_input as the user message. Enforce JSON output. Parse the response to extract:
-   {"intent": "register"|"list"|"delete"|"unknown", "data": {field: value, ...}}
-   Load _API_KEY from os.getenv() only; never hardcode it.
-2. Step 2 — Reflection: Call the model again with _REFLECTION_PROMPT formatted with
-   the extraction result. Enforce JSON output. Parse the response to get
-   {"complete": bool, "missing": [...]}.
-   If complete is False, return {"status": "incomplete", "message": ..., "missing": [...]}
-   immediately — do NOT call any storage function.
-3. Step 3 — Dispatch: Based on intent, call:
-   - "register" → save_member(data)              returns "success" | "exists" | "error"
-   - "list"     → get_members()                  returns list of dicts
-   - "delete"   → delete_member(data.get("email")) returns "success" | "not_found" | "error"
-   - "unknown"  → return {"status": "unknown", "message": "...", "data": None}
-4. Return contract: every code path returns a dict with at least "status" and "message" keys.
-5. Import save_member, get_members, delete_member at the top of engine.py
-   so the patch paths in tests (src.engine.engine.*) resolve correctly.
-6. Wrap all logic in try/except; return {"status": "error", "message": str(e), "data": None}.
+1. format_response: Read result["status"] and return a formatted string for each case:
+   - "success"    → start with result["message"]; if result.get("data") is a non-empty
+                    list, append each member's name and email on an indented line,
+                    e.g., "  - {name} ({email})".
+   - "exists"     → return result["message"].
+   - "incomplete" → return result["message"] + "\n  Missing: " +
+                    ", ".join(result["missing"]).
+   - "unknown"    → return result["message"] + "\n\n" + _HELP_TEXT.
+   - "error" and all other statuses → return result.get("message", "Unexpected response.").
+   Do not raise; always return a string.
+2. run_session: Loop calling input("You: ") to read one line at a time.
+   - Skip blank lines (after strip).
+   - Exit cleanly (print a goodbye message and return) when the line equals "quit"
+     or "exit" (case-insensitive), or when EOFError is raised.
+   - For all other input, call process_fn(user_input) to get a result dict,
+     then print "Assistant: " followed by format_response(result).
+   - Print a blank line after each response for readability.
+3. process_fn defaults to process_request imported from src.engine.engine at the
+   top of cli.py. Inside run_session, always call process_fn(user_input) —
+   never call process_request directly — so tests can inject a mock.
+4. Import process_request at the top of cli.py:
+       from src.engine.engine import process_request
+   This ensures the patch path "src.interface.cli.process_request" is valid if needed.
+5. Do not modify or weaken any tests.
 ```
 
 ## Guardrail Prompts
 
-- Incorrect patch target (tests fail despite correct logic):
-  - `Import storage functions at the top of engine.py with 'from src.storage...' so tests can patch 'src.engine.engine.save_member' correctly.`
+- `format_response` raises instead of returning:
+  - `Every code path in format_response must return a string. Remove any raise statements from the implementation and add a default case that returns result.get("message", "Unexpected response.").`
 
-- Reflection not blocking storage call:
-  - `When reflection returns complete=False, use an early return immediately — do not fall through to the dispatch block.`
+- `run_session` does not use `process_fn` parameter:
+  - `Replace any direct calls to process_request inside the loop with calls to process_fn. The process_fn parameter exists specifically so tests can inject a mock engine.`
 
-- Missing "message" key in some paths:
-  - `Every return statement must include both "status" and "message" keys. Check all branches including "unknown" and "error".`
+- Member list not appearing in format output:
+  - `When result["status"] == "success" and result.get("data") is a non-empty list, iterate over the list and append each item's "name" and "email" to the output string on a new indented line.`
 
-- Hardcoded API key:
-  - `Load _API_KEY from os.getenv() only. Never write the key value in source code.`
-
-- Model response not parseable as JSON:
-  - `Both model calls (_EXTRACTION_PROMPT and _REFLECTION_PROMPT) must enforce JSON-only output. Use the structured output option available in the SDK being used (e.g., response_mime_type, response_format, or equivalent).`
+- Session loop does not exit on "quit":
+  - `Compare user_input.strip().lower() against "quit" and "exit" at the top of the loop body, before calling process_fn.`
 
 ## Verification Prompt
 
 ```text
-Now run the engine tests and confirm which test validates each behavior:
-- Test 1: save_member called with correct data, returns success status
-- Test 2: save_member returns "exists", engine returns exists status
-- Test 3: get_members result is returned in data field
-- Test 4: Reflection blocks incomplete input — save_member is never called
-- Test 5: Unknown intent returns unknown status without calling any storage function
+Now run the interface tests and confirm which test validates each behavior:
+- Test 1: format_response with success + data list — member name and email appear in output
+- Test 2: format_response with exists — duplicate message appears in output
+- Test 3: format_response with incomplete — each missing field name appears in output
+- Test 4: format_response with unknown — help text with available actions appears in output
+- Test 5: run_session with mocked engine — formatted engine response appears in stdout
 If any test fails, fix the implementation only — do not modify or weaken the tests.
 ```

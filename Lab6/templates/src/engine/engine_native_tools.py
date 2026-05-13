@@ -1,4 +1,4 @@
-"""Lab 7 Optional Extension: Hand-Rolled Multi-Turn Tool Calling.
+"""Lab 6 Optional Extension: Hand-Rolled Multi-Turn Tool Calling.
 
 Shows how LLM-decided tool calling works by implementing it from scratch
 instead of using the SDK's built-in tools=[...] parameter.

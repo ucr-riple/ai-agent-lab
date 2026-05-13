@@ -7,114 +7,77 @@ Date:
 
 ---
 
-## 1) Setup Checklist
-
-- [ ] `google-genai` added to `requirements.txt` and installed.
-- [ ] `src/engine/__init__.py` and `src/engine/engine.py` created.
-- [ ] `tests/engine/__init__.py` and `tests/engine/test_engine.py` created.
-- [ ] `GEMINI_API_KEY` is set in `.env`.
-
-## 2) Test Results
-
-- [ ] All five unit tests in `test_engine.py` pass with mocked storage.
-- [ ] Integration smoke test runs and prints a valid response dict.
-- [ ] Full suite `pytest tests/ -v` is all green.
-
-## 3) Current Snapshot
+## 1) Current Snapshot of Your Own Project
 
 - Current status (one line):
 - Next small step (one line):
 
-## 4) Pattern Awareness
+## 2) Discussion Questions
 
-- [ ] I can describe the Tool Use pattern in one sentence (AI determines which function to call).
-- [ ] I can describe the Reflection pattern in one sentence (AI validates its own output before acting).
-- [ ] I can explain why `mock_save.assert_not_called()` in Test 4 is the most important assertion.
-- [ ] I know why the patch target is `"src.engine.engine.save_member"` and not `"src.storage.storage_handler.save_member"`.
+### A) Dependency Injection
 
-Agent prompt used (paste or summarize):
-
-```
-[paste here]
-```
-
-## 5) Discussion Questions
-
-### A) Tool Use vs Keyword Matching
-
-Question: Why use Gemini to determine intent instead of checking if the user's message contains the word "register" or "list"?
+Question: `run_session` accepts a `process_fn` parameter and defaults it to `process_request`.
+Why is this better than calling `process_request` directly inside the loop?
 
 Your answer:
 
 
-### B) Reflection Value
+### B) Format Contract
 
-Question: The Reflection step adds a second Gemini API call, which costs time and money. When is this cost worth paying, and when might you skip it?
+Question: `format_response` reads `result["status"]` to decide what to display.
+What breaks in the interface if the engine starts returning a plain string instead of a typed dict?
 
 Your answer:
 
 
-### C) Mock vs Integration Testing
+### C) Layer Isolation in Testing
 
-Question: The engine unit tests mock the storage layer. The Lab 6 tests hit a real Google Sheet. Why does the choice of mocking vs. integration testing differ between the engine layer and the storage layer?
+Question: The interface unit tests mock the engine entirely — no LLM API calls are made.
+What kinds of bugs would these tests miss, and what would the full system integration test catch that the unit tests cannot?
 
 Your answer:
 
 ---
 
-## 6) Optional Extension: Manual Multi-Turn SDK Tool Calling
+## 3) Optional Extension: Conversation History
 
-Complete this section only if you ran `engine_native_tools.py`.
+Complete this section only if you implemented the history buffer in `run_session`.
 
-```bash
-cp ../Lab7/templates/src/engine/engine_native_tools.py src/engine/
-python -m src.engine.engine_native_tools
-```
+- [ ] I modified `run_session` to maintain a `history` list and prepend prior turns to each engine call.
 
-- [ ] I ran the demo and saw `[Turn 1]`, `[Execute]`, and `[Turn 2]` printed for at least one input.
+### Observation 1 — Follow-up turns
 
-### Observation 1 — The two turns
+Register a member across multiple turns (provide one field per message).
+At what turn did the engine accept the registration?
 
-For input `"Show me all registered members."`, paste what the terminal printed for each step:
+Turn 1 input / engine status:
 
-`[Turn 1]  model chose →`
+Turn 2 input / engine status:
 
-`[Execute] tool returned →`
+Turn 3 input / engine status:
 
-`[Turn 2]  model synthesized final answer`
-
-Final output string:
+Turn 4 (if needed) input / engine status:
 
 
-### Observation 2 — Incomplete input
+### Observation 2 — Reflection with history
 
-Input: `"Register incomplete."`
+Did the Reflection step correctly track which fields were still missing across turns, or did it lose earlier fields?
 
-Did the demo print a `[Turn 1]` / `[Execute]` / `[Turn 2]` sequence, or did it return immediately from Turn 1?
-
-Primary engine output (`engine.py`):
-
-Native multi-turn output (`engine_native_tools.py`):
-
-Which behavior is more reliable for a production system, and why?
+Describe what happened:
 
 
-### Observation 3 — Return contract
+### Observation 3 — History depth limit
 
-Primary engine returns `{"status": ..., "message": ..., "data": ...}`. The native version returns a plain `str`.
+What happened when the history grew beyond 4 turns? Did response quality change?
 
-Why does returning an unstructured string make the native version harder to integrate with an interface layer?
-
-
-### Observation 4 — Dynamic tool list (OPTIONAL TODO 3)
-
-If you completed OPTIONAL TODO 3 (adding `find_member` to the tool list):
-
-What did `_describe_tools` generate for `find_member` without any changes to the function?
-
-Did the model correctly route a "find member" request to it?
+Your observation:
 
 
-### Observation 5 — Your preference
+### Observation 4 — Comparison to Lab 6 Optional
 
-Given the tradeoffs in the comparison table, which approach would you choose for a production feature? Justify in 2-3 sentences.
+The Lab 6 extension used a two-turn loop **per request** (Turn 1: model decides tool, Turn 2: model synthesizes answer).
+The history extension here maintains context **across requests** at the interface level.
+
+What is the fundamental difference between these two approaches? Which problem does each one solve?
+
+Your answer:

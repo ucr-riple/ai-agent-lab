@@ -1,4 +1,4 @@
-"""Lab 8 starter for the interface layer.
+"""Lab 7 starter for the interface layer.
 
 The interface is the Presentation Layer (Skin) of the system.
 

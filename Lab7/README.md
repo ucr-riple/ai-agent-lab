@@ -1,143 +1,117 @@
-# Lab 7: Logic Layer — Tool Use & Reflection Design Patterns
+# Lab 7: Presentation Layer & System Integration
 
 ## 1. Objective & Learning Outcomes
 
-- Understand two agentic design patterns: **Tool Use** (AI dispatches to Python functions) and **Reflection** (AI validates its own output before acting).
-- Implement the engine layer (`src/engine/engine.py`) using TDD + coding agents.
-- Complete the `interface → engine → storage` chain defined in Lab 4.
+- Build the **interface layer** (`src/interface/cli.py`) to complete the three-tier architecture: `interface → engine → storage`.
+- Practice **dependency injection** — `run_session` accepts `process_fn` so the engine can be swapped for a test double.
+- Understand **format contracts**: the interface depends on the engine's typed `dict` return to format output reliably.
+- Run a **full system integration test** with all three layers active simultaneously.
 
 ## 2. Prerequisites
 
-- Lab 6 complete: live Google Sheets connected, all storage tests green.
+- Lab 6 complete: all five engine tests pass and integration smoke test runs.
 - `service_account.json` in project root and storage layer working.
-- `.env` with `GEMINI_API_KEY` set (from Lab 1 setup).
+- `.env` with `GEMINI_API_KEY` set.
 
-Add `google-genai` to your project's `requirements.txt` and install it:
-
-```bash
-echo "google-genai>=1.0.0" >> requirements.txt
-pip install -r requirements.txt
-```
+No new dependencies are required for this lab.
 
 ---
 
-## 3. The Two Patterns
+## 3. The Interface Layer
 
-### Tool Use
+The interface is the **Presentation Layer** (Skin) of the system. It is responsible only for:
 
-The engine receives raw natural-language input and must decide which storage operation to perform. Rather than hardcoding keyword matching, it delegates this decision to Gemini: the AI extracts a structured intent and any provided fields from the user's message.
-
-```
-user_input (str)
-    └── Gemini (extraction call)
-            └── {"intent": "register", "data": {"name": ..., "email": ...}}
-                    └── Python dispatches → save_member(data)
-```
-
-The AI "uses a tool" indirectly: it tells the engine which function to call and with which arguments. This is the **Tool Use** pattern.
-
-### Reflection
-
-After the AI extracts intent and data, a second AI call validates whether the extraction is complete before any storage function is called. If required fields are missing, the engine returns `"incomplete"` immediately — the storage layer is never touched.
+1. Collecting raw text input from the user.
+2. Passing that text to `process_request()` in the engine layer.
+3. Formatting the response dict into a human-readable string and printing it.
 
 ```
-extracted_data
-    └── Gemini (reflection call)
-            └── {"complete": false, "missing": ["email", "student_id"]}
-                    └── return {"status": "incomplete", ...}   ← storage NOT called
+user → run_session() → engine.process_request() → storage
+                     ←──────────── result dict ──────────
+                     → format_response(result) → terminal
 ```
 
-This is the **Reflection** pattern: the AI critiques its own output to catch errors before they propagate.
+The interface layer has **no AI calls** and **no storage access**. It delegates all logic to the engine and all persistence to storage.
+
+This separation makes the interface layer independently testable: in unit tests the engine is replaced with a mock, so the interface tests never make a real API call or touch Google Sheets.
 
 ---
 
-## 4. Phase 1: Add Engine Skeleton
+## 4. Phase 1: Add Interface Skeleton
 
-Create the engine module in your project:
-
-```bash
-cp ../Lab7/templates/src/engine/engine.py src/engine/
-```
-
-Also create the test folder:
+Create the interface module in your project:
 
 ```bash
-mkdir -p tests/engine
-cp ../Lab7/templates/tests/engine/test_engine.py tests/engine/
+mkdir -p src/interface tests/interface
+cp ../Lab7/templates/src/interface/cli.py src/interface/
+cp ../Lab7/templates/tests/interface/test_interface.py tests/interface/
 ```
 
 ---
 
 ## 5. Phase 2: Write Failing Tests (Red State)
 
-Run the engine tests immediately after copying:
+Run the interface tests immediately after copying:
 
 ```bash
-pytest tests/engine/test_engine.py -v
+pytest tests/interface/test_interface.py -v
 ```
 
 You should see `NotImplementedError` on all five tests — this is expected.
 
 Minimum required test cases (already in the template):
-- Register success: storage mock returns `"success"` → engine returns `{"status": "success"}`.
-- Register duplicate: storage mock returns `"exists"` → engine returns `{"status": "exists"}`.
-- List members: storage mock returns a list → engine returns `{"status": "success", "data": [...]}`.
-- Reflection blocks incomplete input: `"Register Bob."` → engine returns `{"status": "incomplete"}` and `save_member` is **never called**.
-- Unknown intent: unrelated input → engine returns `{"status": "unknown"}`.
-
-Test 4 is the most important: `mock_save.assert_not_called()` verifies that Reflection actually prevents a bad write.
+- **Format success with data**: `"success"` result with a member list includes each member's name and email.
+- **Format exists**: `"exists"` result output includes the duplicate message.
+- **Format incomplete**: `"incomplete"` result output lists every missing field name.
+- **Format unknown**: `"unknown"` result output includes help text with available actions.
+- **Run session**: `run_session()` with a mocked engine prints the formatted response to stdout.
 
 ---
 
 ## 6. Phase 3: Implement with Coding Agent (Green State)
 
-Use the agent prompt in `AGENT_PROMPTS.md` to implement `process_request()`.
+Use the agent prompt in `AGENT_PROMPTS.md` to implement `format_response()` and `run_session()`.
 
 Run tests to confirm green state:
 
 ```bash
-pytest tests/engine/test_engine.py -v
+pytest tests/interface/test_interface.py -v
 ```
 
 All five tests must pass.
 
-Key implementation note — mock patch target:
+Key implementation note — dependency injection:
 
-When `engine.py` imports `save_member` with:
-```python
-from src.storage.storage_handler import save_member
-```
-the correct patch path is `"src.engine.engine.save_member"` (where it is **used**, not where it is defined). Make sure your implementation imports storage functions at the top of `engine.py` so the patch targets are predictable.
+`run_session` accepts an optional `process_fn` parameter. When `process_fn is None`, it defaults to `process_request` imported at the top of `cli.py`. Inside the loop, always call `process_fn(user_input)` — never call `process_request` directly — so tests can inject a mock without patching.
+
+If you need to patch for other reasons, the correct patch path is `"src.interface.cli.process_request"` (where it is **used**, not where it is defined).
 
 ---
 
-## 7. Phase 4: Integration Smoke Test
+## 7. Phase 4: Full System Integration Test
 
-After unit tests pass, run a quick end-to-end test with real storage:
-
-```bash
-python -c "
-from src.engine.engine import process_request
-result = process_request('Show me all registered members.')
-print(result)
-"
-```
-
-Expected: `{'status': 'success', 'message': ..., 'data': [...]}` with live data from your Google Sheet.
-
-Then test a registration:
+After unit tests pass, run the CLI with the full stack active:
 
 ```bash
-python -c "
-from src.engine.engine import process_request
-result = process_request('Register Test User, test7@ucr.edu, student_id 7001, ECE major.')
-print(result)
-"
+python -m src.interface.cli
 ```
 
-Verify the new row appears in your Google Sheet.
+Test each engine capability in sequence:
 
-Clean up test data from the sheet when done.
+1. Register a new member: `Register Test User, test8@ucr.edu, student_id 8001, CS major.`
+2. List all members: `Show me all registered members.`
+3. Try an incomplete registration: `Register Bob.`
+4. Delete the test member: `Delete test8@ucr.edu.`
+5. Try an off-topic message: `What is the weather today?`
+
+Verify that:
+- The new member appears in your Google Sheet after step 1.
+- The member is listed in the output for step 2.
+- Step 3 returns an `"incomplete"` message with the specific missing fields.
+- The member row is removed from the sheet after step 4.
+- Step 5 returns an `"unknown"` response with the help text.
+
+Type `quit` or `exit` to stop the session.
 
 ---
 
@@ -149,7 +123,7 @@ Run all tests across every layer:
 pytest tests/ -v
 ```
 
-All storage and engine tests must pass. This confirms the full `engine → storage` chain is working correctly.
+All storage, engine, and interface tests must pass. This confirms the complete `interface → engine → storage` chain is working correctly end to end.
 
 ---
 
@@ -157,11 +131,11 @@ All storage and engine tests must pass. This confirms the full `engine → stora
 
 | Symptom | Likely Cause | Fix |
 |---|---|---|
-| `patch` has no effect | Patching the wrong module path | Patch `"src.engine.engine.save_member"`, not `"src.storage.storage_handler.save_member"` |
-| `test_incomplete_...` fails | Reflection step not implemented or bypassed | Ensure reflection call happens before any storage dispatch |
-| `mock_save.assert_not_called()` fails | Storage called despite incomplete data | Reflection must return early before the dispatch block |
-| `status` key missing from return | Not all code paths return a full dict | Every branch must return `{"status": ..., "message": ...}` |
-| `GEMINI_API_KEY` error in tests | `.env` not loaded in test context | Add `load_dotenv()` at the top of `engine.py` |
+| `format_response` wrong for `"success"` with data | Member list not iterated | Check `result.get("data")` is a list and iterate each item |
+| `test_run_session_...` hangs | Loop not using built-in `input()` | Ensure the loop calls `input(...)`, not `sys.stdin.readline()` |
+| `test_run_session_...` assertion fails | Formatted string missing the expected substring | Match your format string to the test's `assert ... in captured.out` check |
+| `NotImplementedError` on all tests | Skeleton not yet modified | Complete the implementation before running tests |
+| Full suite fails on engine or storage tests | Earlier layer incomplete | Complete Labs 5–7 first |
 
 See `AGENT_PROMPTS.md` for copy-paste guardrail prompts.
 
@@ -169,9 +143,6 @@ See `AGENT_PROMPTS.md` for copy-paste guardrail prompts.
 
 ## 10. Deliverables for Checkoff
 
-- [ ] All five engine unit tests pass (`pytest tests/engine/ -v`).
-- [ ] Integration smoke test runs and produces a valid response.
-- [ ] Full suite `pytest tests/ -v` is all green.
 - [ ] `WORKSHEET.md` submitted.
 
 Submit `WORKSHEET.md` for Lab 7 checkoff.
@@ -179,55 +150,29 @@ Full implementation for each student's own app and functionalities is due by **e
 
 ---
 
-## 11. Optional Extension: Hand-Rolled Multi-Turn Tool Calling
+## 11. Optional Extension: Conversation History
 
-The primary engine uses structured extraction: your Python code extracts intent as JSON, runs Reflection, then dispatches to storage. This is explicit and testable.
+The current CLI treats each user message independently — `process_request` receives only the current turn's text. This extension adds a **conversation history buffer** so the engine sees prior context when answering follow-up messages.
 
-This extension builds tool calling from scratch — **no `tools=` config is passed to the SDK**. Two helper functions implement what the SDK automates internally:
+Modify `run_session` to maintain a `history` list of `{"role": str, "text": str}` dicts. Before each engine call, build a context string from the last N turns and prepend it to `user_input`:
 
-- **`_describe_tools(fns)`** — iterates the caller-supplied function list, uses `inspect.signature` to read each function's parameter names and type annotations, takes the first line of `__doc__` as a summary, and returns a formatted string that goes directly into the Turn 1 prompt. The model never sees actual Python callables — only this text.
-
-- **`_dispatch(table, name, args)`** — builds a `{name: fn}` lookup table from the same list, then uses `inspect.signature` to decide the calling convention: no-arg functions get `fn()`, functions with a single `dict`-annotated parameter get `fn(args)`, all others get `fn(**args)`.
-
-```
-_describe_tools([save_member, get_members, delete_member])
-   → "  save_member(member_data: dict)  — Save member into storage.\n ..."
-
-Turn 1   _TURN1_TEMPLATE.format(tool_descriptions=..., user_input=...)
-         → model outputs {"tool": "save_member", "args": {...}}
-
-Execute  _dispatch(tool_table, "save_member", args)
-         → inspects signature → fn(args)  → "success" | "exists" | "error"
-
-Turn 2   _TURN2_TEMPLATE.format(tool_result=...) → model writes final answer
+```python
+context = "\n".join(f"{h['role']}: {h['text']}" for h in history[-4:])
+augmented_input = f"{context}\nUser: {user_input}" if context else user_input
+result = process_fn(augmented_input)
 ```
 
-### Side-by-side comparison
+Then append each user turn (and the engine's status) to `history` after the call.
 
-| Property | Primary (`engine.py`) | This file (`engine_native_tools.py`) |
-|---|---|---|
-| Intent detection | Structured JSON extraction | JSON tool-call decision via prompt |
-| Validation | Explicit Reflection call | Model's own judgment |
-| SDK tool config | None | None — tools described via `_describe_tools` |
-| Dispatch | Hardcoded `if/elif` | `_dispatch()` driven by `inspect` + name table |
-| Tool list | Baked into engine | Passed by the caller |
-| Return value | Typed `dict` contract | Natural-language `str` |
-| Unit-testable | Yes — mock storage functions | Hard — model controls flow |
+### What to test
 
-### Run the demo
-
-```bash
-cp ../Lab7/templates/src/engine/engine_native_tools.py src/engine/
-python -m src.engine.engine_native_tools
-```
-
-The demo prints `[Turn 1]`, `[Execute]`, and `[Turn 2]` for each input so you can follow the two-turn flow.
+1. Ask to register a member but provide only the name.
+2. In the next turn, add `"My email is bob@ucr.edu"` — a follow-up without repeating the name.
+3. Continue adding fields one turn at a time until the engine accepts the registration.
 
 ### What to notice
 
-1. **Turn 1 response** — the model outputs `{"tool": "get_members", "args": {}}` (or similar). This JSON is the model's decision, parsed by your code — not by the SDK.
-2. **Null tool** — for off-topic input, the model outputs `{"tool": null, ...}`. Your code handles this branch and asks the model to answer directly.
-3. **Incomplete input** (`"Register incomplete."`) — does the model still call `save_member` with partial args, or does it set `tool` to `null`? Compare to what the Reflection step in `engine.py` guarantees every time.
-4. **Return type** — the function returns a plain `str`. A downstream interface layer cannot branch reliably on `result["status"]`.
-
-After running this, read the SDK docs for `GenerateContentConfig(tools=[...])`. OPTIONAL TODO 3 in the file asks you to identify what the SDK adds on top of what this hand-rolled version does.
+1. **Context window growth** — at what history depth does the engine start to lose earlier fields?
+2. **Reflection with context** — does the Reflection step correctly identify which fields are still missing even when they appear in prior turns?
+3. **Return contract dependency** — can `run_session` use `result["status"]` to decide whether to append a turn to history (e.g., skip appending on `"error"`), or is it safer to store all turns unconditionally?
+4. **Comparison to Lab 6 Optional** — the Lab 6 extension used a two-turn SDK loop per request. How does session-level history in the interface differ from per-request multi-turn in the engine?

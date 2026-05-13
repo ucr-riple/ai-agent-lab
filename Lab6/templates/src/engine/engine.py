@@ -1,4 +1,4 @@
-"""Lab 7 starter for engine layer implementation.
+"""Lab 6 starter for engine layer implementation.
 
 The engine is the Logic Layer of the system.
 
