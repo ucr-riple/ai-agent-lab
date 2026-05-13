@@ -188,10 +188,6 @@ See `AGENT_PROMPTS.md` for copy-paste guardrail prompts.
 
 ## 9. Deliverables for Checkoff
 
-- [ ] `verify_connection.py` runs and prints `Connection OK.`
-- [ ] Lab 5 tests (`test_storage.py`) pass with live Google Sheet.
-- [ ] Extended tests (`test_storage_extended.py`) pass in green state.
-- [ ] Full suite `pytest tests/storage/ -v` is all green.
 - [ ] `WORKSHEET.md` submitted.
 
 Submit `WORKSHEET.md` for Lab 6 checkoff.
